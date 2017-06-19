@@ -14,8 +14,8 @@ package org.talend.components.service.rest.fullexample;
 
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8_VALUE;
 
@@ -36,7 +36,6 @@ import org.talend.daikon.properties.test.PropertiesTestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.response.Response;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringTestApp.class, webEnvironment = RANDOM_PORT)
@@ -72,47 +71,42 @@ public class FullExampleComponentTestIT {
 
     @Test
     public void initializeFullExampleDatastoreProperties() throws java.io.IOException {
-        // given
         PropertiesDto properties = new PropertiesDto();
         properties.setProperties(getFullExampleDataStoreProperties());
 
-        // when
-        Response response = given().content(properties).contentType(APPLICATION_JSON_UTF8_VALUE) //
+        given().content(properties).contentType(APPLICATION_JSON_UTF8_VALUE) //
                 .accept(APPLICATION_JSON_UTF8_VALUE) //
                 .expect().statusCode(200).log().ifError() //
-                .post("properties/{definitionName}", DATA_STORE_DEFINITION_NAME);
-
-        // then
-        ObjectNode fullexampleProperties = mapper.readerFor(ObjectNode.class).readValue(response.asInputStream());
-        // should resemble fullexample_data_store_form.json
-        assertNotNull(fullexampleProperties.get("jsonSchema"));
-        assertNotNull(fullexampleProperties.get("properties"));
-        assertNotNull(fullexampleProperties.get("uiSchema"));
-        assertEquals("FullExampleDatastore", fullexampleProperties.get("properties").get("@definitionName").textValue());
+                .when()//
+                .post("properties/{definitionName}", DATA_STORE_DEFINITION_NAME)//
+                .then()//
+                .body("jsonSchema", notNullValue())//
+                .body("properties", notNullValue())//
+                .body("uiSchema", notNullValue())//
+                .body("properties.@definitionName", equalTo("FullExampleDatastore"))//
+        ;
     }
 
     @Test
     public void initializeFullExampleDatasetProperties() throws java.io.IOException {
-        // given
         PropertiesDto propertiesDto = new PropertiesDto();
         propertiesDto.setProperties(getFileAsObjectNode("fullexample_dataset_properties.json"));
         propertiesDto.setDependencies(singletonList(getFullExampleDataStoreProperties()));
         String dataSetDefinitionName = "FullExampleDataset";
 
-        // when
-        Response response = given().content(propertiesDto).contentType(APPLICATION_JSON_UTF8_VALUE) //
+        given().content(propertiesDto).contentType(APPLICATION_JSON_UTF8_VALUE) //
                 .accept(APPLICATION_JSON_UTF8_VALUE) //
                 .expect().statusCode(200).log().ifError() //
-                .post("properties/{definitionName}", dataSetDefinitionName);
-
-        // then
-        ObjectNode fullexampleProperties = mapper.readerFor(ObjectNode.class).readValue(response.asInputStream());
-        assertNotNull(fullexampleProperties.get("jsonSchema"));
-        assertNotNull(fullexampleProperties.get("properties"));
-        assertNotNull(fullexampleProperties.get("uiSchema"));
-        assertEquals("FullExampleDataset", fullexampleProperties.get("properties").get("@definitionName").textValue());
-        assertEquals("hidden", fullexampleProperties.get("uiSchema").get("moduleName").get("ui:widget").textValue());
-        assertEquals("textarea", fullexampleProperties.get("uiSchema").get("query").get("ui:widget").textValue());
+                .when()//
+                .post("properties/{definitionName}", dataSetDefinitionName)//
+                .then()//
+                .body("jsonSchema", notNullValue())//
+                .body("properties", notNullValue())//
+                .body("uiSchema", notNullValue())//
+                .body("properties.@definitionName", equalTo("FullExampleDataset"))//
+                .body("uiSchema.moduleName.'ui:widget'", equalTo("hidden"))//
+                .body("uiSchema.query.'ui:widget'", equalTo("textarea"))//
+        ;
     }
 
     private ObjectNode getFileAsObjectNode(String file) throws java.io.IOException {
@@ -121,24 +115,22 @@ public class FullExampleComponentTestIT {
 
     @Test
     public void testAfterDatastoreCalled() throws java.io.IOException {
-        // given
         PropertiesDto propertiesDto = new PropertiesDto();
         propertiesDto.setProperties(getFileAsObjectNode("fullexample_dataset_properties.json"));
         propertiesDto.setDependencies(singletonList(getFullExampleDataStoreProperties()));
         String dataSetDefinitionName = "FullExampleDataset";
 
-        // when
-        Response response = given().content(propertiesDto).contentType(APPLICATION_JSON_UTF8_VALUE) //
+        given().content(propertiesDto).contentType(APPLICATION_JSON_UTF8_VALUE) //
                 .accept(APPLICATION_JSON_UTF8_VALUE) //
                 .expect().statusCode(200).log().ifError() //
-                .post("properties/{definitionName}", dataSetDefinitionName);
-
-        // then
-        ObjectNode fullexampleProperties = mapper.readerFor(ObjectNode.class).readValue(response.asInputStream());
-        assertNotNull(fullexampleProperties.get("jsonSchema"));
-        assertNotNull(fullexampleProperties.get("properties"));
-        assertNotNull(fullexampleProperties.get("uiSchema"));
-        assertEquals("bar", fullexampleProperties.get("properties").get("testAfterDatastoreTrigger").textValue());
+                .when()//
+                .post("properties/{definitionName}", dataSetDefinitionName)//
+                .then()//
+                .body("jsonSchema", notNullValue())//
+                .body("properties", notNullValue())//
+                .body("uiSchema", notNullValue())//
+                .body("properties.testAfterDatastoreTrigger", equalTo("bar"))//
+        ;
     }
 
 }
